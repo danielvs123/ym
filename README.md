@@ -23,6 +23,7 @@ https://www.zsy-xsy.com/Share/web/index.php?r=share/demo<br>
 <strong>注意！</strong>
 <br>
   目前都是测试版本。appToken为123<br>
-  This is the beta version, and the information is only covered from Jan 2011 to Aug 2018
+  价格输入更新至2017年8月1日
+  This is the beta version, and the information is only covered from Jan 2011 to Aug 2018<br>
+  The appToken for beta version is 123 and the appId is api@shuaiyixu.com
   <br>
-  价格输入更新至2017年8月1日
