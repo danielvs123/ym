@@ -19,3 +19,10 @@ https://www.zsy-xsy.com/Share/web/index.php?r=share/intro<br>
 
 
 https://www.zsy-xsy.com/Share/web/index.php?r=share/demo<br>
+
+<strong>注意！</strong>
+<br>
+  目前都是测试版本。appToken为123<br>
+  This is the beta version, and the information is only covered from Jan 2011 to Aug 2018
+  <br>
+  价格输入更新至2017年8月1日
