@@ -1,9 +1,7 @@
 ;(function ( ym, undefined ) {
     var version = "1.0.0",
-        //host = "//www.zsy-xsy.com/Share/web/index.php?r=share/api",
-        //check = "//www.zsy-xsy.com/Share/web/index.php?r=share/check",
-        host = "http://www.xsy.com/web/index.php?r=share/api",
-        check = "http://www.xsy.com/web/index.php?r=share/check",
+        host = "//www.zsy-xsy.com/Share/web/index.php?r=share/api",
+        check = "//www.zsy-xsy.com/Share/web/index.php?r=share/check",
         appId = "",
         appToken = "",
         isInit = false;
@@ -97,6 +95,7 @@
             var div = document.querySelector("#"+_div);
             if (div){
                 var _canvas = document.createElement("canvas"),
+                    _div = document.createElement("div"),
                     _ctx = _canvas.getContext("2d");
                 _width = (_width<300)?300:_width;
                 _canvas.width = _width;
@@ -109,6 +108,8 @@
                 _ctx.fillStyle = (_setting.hasOwnProperty('bgColor'))?_setting.bgColor: "#E6E6FA";
                 _ctx.fillRect(0,_height*0.2,_width,_height*0.8);
                 _ctx.strokeStyle = (_setting.hasOwnProperty('lineColor'))?_setting.lineColor : "#FF0000";
+
+                var eachWidth,dayArr = [],priceData = [];
                 ajax({
                     type: 'POST',
                     url: host,
@@ -123,13 +124,12 @@
                     success: function(data){
                         data = JSON.parse(data);
                         if (checkStatus(data)){
-                            var totalLength = data["data"].length,
-                                eachWidth = _width/(totalLength-1),
-                                priceData = [],
-                                dayArr = [];
+                            var totalLength = data["data"].length;
+                            eachWidth = _width/(totalLength-1)
                             for (var i = 0;i <totalLength;i++){
                                 priceData.push(data["data"][i].close);
-                                dayArr.push(data["data"][i].day);
+                                var dayFormat = parseInt(data["data"][i].year)*10000+parseInt(data["data"][i].month)*100+parseInt(data["data"][i].day)
+                                dayArr.push(dayFormat);
                             }
                             var biggest = findBiggest(priceData),
                                 smallest = findSmallest(priceData),
@@ -143,7 +143,57 @@
                         }
                     }
                 })
-                div.appendChild(_canvas);
+
+                _div.style.position = "relative";
+                div.appendChild(_div);
+                _div.appendChild(_canvas);
+                var _touchCanvas = document.createElement("canvas"),
+                    _touchCtx = _touchCanvas.getContext("2d");
+                _touchCanvas.width = _width;
+                _touchCanvas.height = _height;
+                _touchCanvas.style.position = "absolute";
+                _touchCanvas.style.top = "0px";
+                _touchCanvas.style.left = "0px";
+                _div.appendChild(_touchCanvas);
+                var span = document.createElement("span");
+                span.innerText = "滑动来读取数据";
+                var br = document.createElement("br");
+                var _span = document.createElement("span");
+                var _eptDiv = document.createElement("div");
+                _eptDiv.style.width = "100%";
+                _div.appendChild(_eptDiv);
+                _span.innerText = "";
+                _div.style.userSelect = "none";
+                _div.appendChild(br);
+                _div.appendChild(br);
+                _div.appendChild(span);
+                _div.appendChild(br);
+                _div.appendChild(_span);
+                _touchCanvas.addEventListener('mousemove', function(e){
+                    var currentSelect = Math.floor((e.offsetX)/eachWidth);
+                    span.innerText = "日期:"+dayArr[currentSelect];
+                    _span.innerText = "收盘价:"+priceData[currentSelect]
+                    _touchCtx.clearRect(0,0,_width,_height);
+                    _touchCtx.beginPath();
+                    _touchCtx.strokeStyle = "black";
+                    _touchCtx.moveTo(e.offsetX,0.2*_height);
+                    _touchCtx.lineTo(e.offsetX,_height);
+                    _touchCtx.stroke();
+                }, false);
+                _touchCanvas.addEventListener('touchmove', function(e){
+                    var touches = e.changedTouches;
+                    var currentSelect = Math.floor((touches[0].pageX-30)/eachWidth);
+                    if (currentSelect>=0&&currentSelect<dayArr.length){
+                        span.innerText = "日期:"+dayArr[currentSelect];
+                        _span.innerText = "收盘价:"+priceData[currentSelect]
+                    }
+                    _touchCtx.clearRect(0,0,_width,_height);
+                    _touchCtx.beginPath();
+                    _touchCtx.strokeStyle = "black";
+                    _touchCtx.moveTo(touches[0].pageX-30,0.2*_height);
+                    _touchCtx.lineTo(touches[0].pageX-30,_height);
+                    _touchCtx.stroke();
+                }, false);
             }else{
                 echo("div not found");
             }
@@ -161,6 +211,7 @@
             var div = document.querySelector("#"+_div);
             if (div){
                 var _canvas = document.createElement("canvas"),
+                    _div = document.createElement("div"),
                     _ctx = _canvas.getContext("2d");
                 _width = (_width<450)?450:_width;
                 _canvas.width = _width;
@@ -173,6 +224,7 @@
                 _ctx.fillStyle = (_setting.hasOwnProperty('bgColor'))?_setting.bgColor: "#E6E6FA";
                 _ctx.fillRect(0,_height*0.2,_width,_height*0.8);
                 _ctx.strokeStyle = (_setting.hasOwnProperty('lineColor'))?_setting.lineColor : "#FF0000";
+                var eachWidth,dayArr = [],priceData = [];
                 ajax({
                     type: 'POST',
                     url: host,
@@ -186,13 +238,12 @@
                     success: function(data){
                         data = JSON.parse(data);
                         if (checkStatus(data)){
-                            var totalLength = data["data"].length,
-                                eachWidth = _width/(totalLength-1),
-                                priceData = [],
-                                dayArr = [];
+                            var totalLength = data["data"].length;
+                                eachWidth = _width/(totalLength-1);
                             for (var i = 0;i <totalLength;i++){
                                 priceData.push(parseFloat(data["data"][i].close));
-                                dayArr.push(data["data"][i].day);
+                                var dayFormat = parseInt(data["data"][i].year)*10000+parseInt(data["data"][i].month)*100+parseInt(data["data"][i].day)
+                                dayArr.push(dayFormat);
                             }
                             var biggest = findBiggest(priceData),
                                 smallest = findSmallest(priceData),
@@ -206,7 +257,56 @@
                         }
                     }
                 })
-                div.appendChild(_canvas);
+                _div.style.userSelect = "none";
+                _div.style.position = "relative";
+                div.appendChild(_div);
+                _div.appendChild(_canvas);
+                var _touchCanvas = document.createElement("canvas"),
+                    _touchCtx = _touchCanvas.getContext("2d");
+                _touchCanvas.width = _width;
+                _touchCanvas.height = _height;
+                _touchCanvas.style.position = "absolute";
+                _touchCanvas.style.top = "0px";
+                _touchCanvas.style.left = "0px";
+                _div.appendChild(_touchCanvas);
+                var span = document.createElement("span");
+                span.innerText = "滑动来读取数据";
+                var br = document.createElement("br");
+                var _span = document.createElement("span");
+                _span.innerText = "";
+                var _eptDiv = document.createElement("div");
+                _eptDiv.style.width = "100%";
+                _div.appendChild(_eptDiv);
+                _div.appendChild(br);
+                _div.appendChild(br);
+                _div.appendChild(span);
+                _div.appendChild(br);
+                _div.appendChild(_span);
+                _touchCanvas.addEventListener('mousemove', function(e){
+                    var currentSelect = Math.floor((e.offsetX)/eachWidth);
+                    span.innerText = "日期:"+dayArr[currentSelect];
+                    _span.innerText = "收盘价:"+priceData[currentSelect]
+                    _touchCtx.clearRect(0,0,_width,_height);
+                    _touchCtx.beginPath();
+                    _touchCtx.strokeStyle = "black";
+                    _touchCtx.moveTo(e.offsetX,0.2*_height);
+                    _touchCtx.lineTo(e.offsetX,_height);
+                    _touchCtx.stroke();
+                }, false);
+                _touchCanvas.addEventListener('touchmove', function(e){
+                    var touches = e.changedTouches;
+                    var currentSelect = Math.floor((touches[0].pageX-30)/eachWidth);
+                    if (currentSelect>=0&&currentSelect<dayArr.length){
+                        span.innerText = "日期:"+dayArr[currentSelect];
+                        _span.innerText = "收盘价:"+priceData[currentSelect]
+                    }
+                    _touchCtx.clearRect(0,0,_width,_height);
+                    _touchCtx.beginPath();
+                    _touchCtx.strokeStyle = "black";
+                    _touchCtx.moveTo(touches[0].pageX-30,0.2*_height);
+                    _touchCtx.lineTo(touches[0].pageX-30,_height);
+                    _touchCtx.stroke();
+                }, false);
             }else{
                 echo("div not found");
             }
