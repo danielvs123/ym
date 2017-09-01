@@ -97,7 +97,9 @@
                 var _canvas = document.createElement("canvas"),
                     _div = document.createElement("div"),
                     _ctx = _canvas.getContext("2d");
-                _width = (_width<300)?300:_width;
+
+                var type = (_setting.hasOwnProperty('type'))?_setting.type: "normal";
+                _width = (_width<100)?100:_width;
                 _canvas.width = _width;
                 var _height = _width*0.75;
                 _canvas.height = _height;
@@ -119,7 +121,8 @@
                         "api":"SingleMonthPrice",
                         "code":_code,
                         "year":_year,
-                        "month":_month
+                        "month":_month,
+                        "type":type
                     },
                     success: function(data){
                         data = JSON.parse(data);
@@ -127,7 +130,7 @@
                             var totalLength = data["data"].length;
                             eachWidth = _width/(totalLength-1)
                             for (var i = 0;i <totalLength;i++){
-                                priceData.push(data["data"][i].close);
+                                priceData.push(parseFloat(data["data"][i].close));
                                 var dayFormat = parseInt(data["data"][i].year)*10000+parseInt(data["data"][i].month)*100+parseInt(data["data"][i].day)
                                 dayArr.push(dayFormat);
                             }
@@ -202,7 +205,7 @@
                 fun:"getSMPrice",
                 params:[_div,_width,_code,_year,_month,_setting]
             })
-            echo("add to waitlist");
+            //echo("add to waitlist");
         }
     }
 
@@ -213,7 +216,8 @@
                 var _canvas = document.createElement("canvas"),
                     _div = document.createElement("div"),
                     _ctx = _canvas.getContext("2d");
-                _width = (_width<450)?450:_width;
+                var type = (_setting.hasOwnProperty('type'))?_setting.type: "normal";
+                _width = (_width<150)?150:_width;
                 _canvas.width = _width;
                 var _height = _width*0.55;
                 _canvas.height = _height;
@@ -233,7 +237,8 @@
                         "appToken":appToken,
                         "api":"SingleYearPrice",
                         "code":_code,
-                        "year":_year
+                        "year":_year,
+                        "type":type
                     },
                     success: function(data){
                         data = JSON.parse(data);
@@ -315,11 +320,11 @@
                 fun:"getSYPrice",
                 params:[_div,_width,_code,_year,_setting]
             })
-            echo("add to waitlist");
+            //echo("add to waitlist");
         }
     }
 
-    ym.getSMTable = function(_div,_width,_code,_year,_month,_setting){
+    ym.getSMTable = function(_div,_code,_year,_month,_setting){
         if (isInit){
             var div = document.querySelector("#"+_div);
             if (div){
@@ -379,9 +384,9 @@
         }else{
             addToCart({
                 fun:"getSMTable",
-                params:[_div,_width,_code,_year,_month,_setting]
+                params:[_div,_code,_year,_month,_setting]
             })
-            echo("add to waitlist");
+            //echo("add to waitlist");
         }
     }
 
@@ -400,24 +405,6 @@
                         "year":_year
                     },
                     success: function(data){
-                        //data = JSON.parse(data);
-                        //if (checkStatus(data)){
-                        //    var table = document.createElement("table");
-                        //    table.className = "bordered";
-                        //    div.body.appendChild(table);
-                        //    var thead = document.createElement("thead");
-                        //    table.appendChild(thead);
-                        //    var nameList = ["日期","开盘价","休盘价","最高价","最低价","成交量","成交额"];
-                        //    var titleTr = document.createElement("tr");
-                        //    table.appendChild(titleTr);
-                        //    for (var name in nameList){
-                        //        var th = document.createElement("th");
-                        //        th.innerText = nameList[name];
-                        //        titleTr.appendChild(th);
-                        //    }
-                        //    //for (var info in data)
-                        //    console.log(data[1]);
-                        //}
                     }
                 })
             }else{
@@ -428,7 +415,7 @@
                 fun:"getSYTable",
                 params:[_div,_width,_code,_year,_setting]
             })
-            echo("add to waitlist");
+            //echo("add to waitlist");
         }
     }
 
