@@ -419,6 +419,268 @@
         }
     }
 
+    ym.setEChartMonth = function(_div,_code,_year,_month,_setting){
+        if (isInit){
+            var type = "normal";
+            var dom = document.getElementById(_div),
+                domWidth = dom.clientWidth;
+            dom.style.width = domWidth + "px";
+            dom.style.height = domWidth*0.7 + "px";
+            ajax({
+                type: 'POST',
+                url: host,
+                data: {
+                    "appId":appId,
+                    "appToken":appToken,
+                    "api":"SingleMonthPrice",
+                    "code":_code,
+                    "year":_year,
+                    "month":_month,
+                    "type":type
+                },
+                success: function(data){
+                    setKEcharts(_div,JSON.parse(data))
+                }
+            })
+        }else{
+            addToCart({
+                fun:"setEChartMonth",
+                params:[_div,_code,_year,month,_setting]
+            })
+        }
+    }
+
+    ym.setEChartYear = function(_div,_code,_year,_setting){
+        if (isInit){
+            var dom = document.getElementById(_div),
+                domWidth = dom.clientWidth;
+            dom.style.width = domWidth + "px";
+            dom.style.height = domWidth*0.7 + "px";
+            var type = "normal";
+            ajax({
+                type: 'POST',
+                url: host,
+                data: {
+                    "appId":appId,
+                    "appToken":appToken,
+                    "api":"SingleYearPrice",
+                    "code":_code,
+                    "year":_year,
+                    "type":type
+                },
+                success: function(data){
+                    setKEcharts(_div,JSON.parse(data))
+                }
+            })
+        }else{
+            addToCart({
+                fun:"setEChartYear",
+                params:[_div,_code,_year,_setting]
+            })
+        }
+    }
+
+
+    function setKEcharts(domName,_data){
+
+        var myChart = echarts.init(document.getElementById(domName));
+        var upColor = '#ec0000';
+        var upBorderColor = '#8A0000';
+        var downColor = '#00da3c';
+        var downBorderColor = '#008F28';
+        var totalData = [];
+        _data = _data.data;
+        for (var i = 0;i<_data.length;i++){
+            var timeFormat = _data[i].year + "/" + _data[i].month + "/" + _data[i].day;
+            var _open =_data[i]["open"],
+                _close = _data[i]["close"],
+                _lowest = _data[i]["low"],
+                _highest = _data[i]["_high"];
+            totalData.push([timeFormat,_open,_close,_lowest,_lowest]);
+        }
+
+        // 数据意义：开盘(open)，收盘(close)，最低(lowest)，最高(highest)
+        var data0 = splitData(totalData);
+
+
+        function splitData(rawData) {
+            var categoryData = [];
+            var values = []
+            for (var i = 0; i < rawData.length; i++) {
+                categoryData.push(rawData[i].splice(0, 1)[0]);
+                values.push(rawData[i])
+            }
+            return {
+                categoryData: categoryData,
+                values: values
+            };
+        }
+
+        //function calculateMA(dayCount) {
+        //    var result = [];
+        //    for (var i = 0, len = data0.values.length; i < len; i++) {
+        //        if (i < dayCount) {
+        //            result.push('-');
+        //            continue;
+        //        }
+        //        var sum = 0;
+        //        for (var j = 0; j < dayCount; j++) {
+        //            sum += data0.values[i - j][1];
+        //        }
+        //        result.push(sum / dayCount);
+        //    }
+        //    return result;
+        //}
+        //
+        var option = {
+            title: {
+                text: _data[1]["code"],
+                left: 0
+            },
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'cross'
+                }
+            },
+            legend: {
+                data: ['日K']
+            },
+            grid: {
+                left: '10%',
+                right: '10%',
+                bottom: '15%'
+            },
+            xAxis: {
+                type: 'category',
+                data: data0.categoryData,
+                scale: true,
+                boundaryGap : false,
+                axisLine: {onZero: false},
+                splitLine: {show: false},
+                splitNumber: 20,
+                min: 'dataMin',
+                max: 'dataMax'
+            },
+            yAxis: {
+                scale: true,
+                splitArea: {
+                    show: true
+                }
+            },
+            dataZoom: [
+                {
+                    type: 'inside',
+                    start: 50,
+                    end: 100
+                },
+                {
+                    show: true,
+                    type: 'slider',
+                    y: '90%',
+                    start: 50,
+                    end: 100
+                }
+            ],
+            series: [
+                {
+                    name: '日K',
+                    type: 'candlestick',
+                    data: data0.values,
+                    itemStyle: {
+                        normal: {
+                            color: upColor,
+                            color0: downColor,
+                            borderColor: upBorderColor,
+                            borderColor0: downBorderColor
+                        }
+                    },
+                    //暂时不采用markPoint
+                    //markPoint: {
+                    //    label: {
+                    //        normal: {
+                    //            formatter: function (param) {
+                    //                return param != null ? Math.round(param.value) : '';
+                    //            }
+                    //        }
+                    //    },
+                    //    data: [
+                    //        {
+                    //            name: 'XX标点',
+                    //            coord: ['2013/5/31', 2300],
+                    //            value: 2300,
+                    //            itemStyle: {
+                    //                normal: {color: 'rgb(41,60,85)'}
+                    //            }
+                    //        },
+                    //        {
+                    //            name: 'highest value',
+                    //            type: 'max',
+                    //            valueDim: 'highest'
+                    //        },
+                    //        {
+                    //            name: 'lowest value',
+                    //            type: 'min',
+                    //            valueDim: 'lowest'
+                    //        },
+                    //        {
+                    //            name: 'average value on close',
+                    //            type: 'average',
+                    //            valueDim: 'close'
+                    //        }
+                    //    ],
+                    //    tooltip: {
+                    //        formatter: function (param) {
+                    //            return param.name + '<br>' + (param.data.coord || '');
+                    //        }
+                    //    }
+                    //},
+                    markLine: {
+                        symbol: ['none', 'none'],
+                        data: [
+                            [
+                                {
+                                    name: 'from lowest to highest',
+                                    type: 'min',
+                                    valueDim: 'lowest',
+                                    symbol: 'circle',
+                                    symbolSize: 10,
+                                    label: {
+                                        normal: {show: false},
+                                        emphasis: {show: false}
+                                    }
+                                },
+                                {
+                                    type: 'max',
+                                    valueDim: 'highest',
+                                    symbol: 'circle',
+                                    symbolSize: 10,
+                                    label: {
+                                        normal: {show: false},
+                                        emphasis: {show: false}
+                                    }
+                                }
+                            ],
+                            {
+                                name: 'min line on close',
+                                type: 'min',
+                                valueDim: 'close'
+                            },
+                            {
+                                name: 'max line on close',
+                                type: 'max',
+                                valueDim: 'close'
+                            }
+                        ]
+                    }
+                }
+
+            ]
+        };
+
+        myChart.setOption(option);
+    }
+
     //内部ajax方法
     function ajax(arguments){
         var ajaxData = {
