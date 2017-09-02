@@ -480,205 +480,493 @@
         }
     }
 
+    ym.setEChartGetTotal = function(_div,_code,_setting){
+        if (isInit){
+            var dom = document.getElementById(_div),
+                domWidth = dom.clientWidth;
+            dom.style.width = domWidth + "px";
+            dom.style.height = domWidth*0.7 + "px";
+            var type = "normal";
+            ajax({
+                type: 'POST',
+                url: host,
+                data: {
+                    "appId":appId,
+                    "appToken":appToken,
+                    "api":"SingleYearPrice",
+                    "year":2015,
+                    "code":_code,
+                    "type":type
+                },
+                success: function(data){
+                    setTotalEcharts(_div,JSON.parse(data))
+                }
+            })
+        }else{
+            addToCart({
+                fun:"setEChartGetTotal",
+                params:[_div,_code,_setting]
+            })
+        }
+    }
+
 
     function setKEcharts(domName,_data){
-
         var myChart = echarts.init(document.getElementById(domName));
         var upColor = '#ec0000';
         var upBorderColor = '#8A0000';
         var downColor = '#00da3c';
         var downBorderColor = '#008F28';
-        var totalData = [];
+        var rawData = [];
         _data = _data.data;
         for (var i = 0;i<_data.length;i++){
             var timeFormat = _data[i].year + "/" + _data[i].month + "/" + _data[i].day;
             var _open =_data[i]["open"],
                 _close = _data[i]["close"],
                 _lowest = _data[i]["low"],
-                _highest = _data[i]["_high"];
-            totalData.push([timeFormat,_open,_close,_lowest,_lowest]);
+                _highest = _data[i]["high"],
+                gap = _open-_close,
+                percent = (gap/_open)+"%";
+            rawData.push([timeFormat,_open,_close,gap,percent,_lowest,_highest]);
         }
 
-        // 数据意义：开盘(open)，收盘(close)，最低(lowest)，最高(highest)
-        var data0 = splitData(totalData);
+        var dates = rawData.map(function (item) {
+            return item[0];
+        });
+
+        var data = rawData.map(function (item) {
+            return [+item[1], +item[2], +item[5], +item[6]];
+        });
+
+        function calculateMA(dayCount, data) {
+            var result = [];
+            for (var i = 0, len = data.length; i < len; i++) {
+                if (i < dayCount) {
+                    result.push('-');
+                    continue;
+                }
+                var sum = 0;
+                for (var j = 0; j < dayCount; j++) {
+                    sum += data[i - j][1];
+                }
+                result.push((sum / dayCount).toFixed(2));
+            }
+            return result;
+        }
 
 
+        var option = {
+            backgroundColor: '#21202D',
+            legend: {
+                data: ['日K', 'MA5', 'MA10', 'MA20', 'MA30'],
+                inactiveColor: '#777',
+                textStyle: {
+                    color: '#fff'
+                }
+            },
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    animation: false,
+                    type: 'cross',
+                    lineStyle: {
+                        color: '#376df4',
+                        width: 2,
+                        opacity: 1
+                    }
+                }
+            },
+            xAxis: {
+                type: 'category',
+                data: dates,
+                axisLine: { lineStyle: { color: '#8392A5' } }
+            },
+            yAxis: {
+                scale: true,
+                axisLine: { lineStyle: { color: '#8392A5' } },
+                splitLine: { show: false }
+            },
+            grid: {
+                bottom: 80
+            },
+            dataZoom: [{
+                textStyle: {
+                    color: '#8392A5'
+                },
+                handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+                handleSize: '80%',
+                dataBackground: {
+                    areaStyle: {
+                        color: '#8392A5'
+                    },
+                    lineStyle: {
+                        opacity: 0.8,
+                        color: '#8392A5'
+                    }
+                },
+                handleStyle: {
+                    color: '#fff',
+                    shadowBlur: 3,
+                    shadowColor: 'rgba(0, 0, 0, 0.6)',
+                    shadowOffsetX: 2,
+                    shadowOffsetY: 2
+                }
+            }, {
+                type: 'inside'
+            }],
+            animation: false,
+            series: [
+                {
+                    type: 'candlestick',
+                    name: '日K',
+                    data: data,
+                    itemStyle: {
+                        normal: {
+                            color: '#FD1050',
+                            color0: '#0CF49B',
+                            borderColor: '#FD1050',
+                            borderColor0: '#0CF49B'
+                        }
+                    }
+                },
+                {
+                    name: 'MA5',
+                    type: 'line',
+                    data: calculateMA(5, data),
+                    smooth: true,
+                    showSymbol: false,
+                    lineStyle: {
+                        normal: {
+                            width: 1
+                        }
+                    }
+                },
+                {
+                    name: 'MA10',
+                    type: 'line',
+                    data: calculateMA(10, data),
+                    smooth: true,
+                    showSymbol: false,
+                    lineStyle: {
+                        normal: {
+                            width: 1
+                        }
+                    }
+                },
+                {
+                    name: 'MA20',
+                    type: 'line',
+                    data: calculateMA(20, data),
+                    smooth: true,
+                    showSymbol: false,
+                    lineStyle: {
+                        normal: {
+                            width: 1
+                        }
+                    }
+                },
+                {
+                    name: 'MA30',
+                    type: 'line',
+                    data: calculateMA(30, data),
+                    smooth: true,
+                    showSymbol: false,
+                    lineStyle: {
+                        normal: {
+                            width: 1
+                        }
+                    }
+                }
+            ]
+        };
+
+        myChart.setOption(option);
+    }
+
+    function setTotalEcharts(domName,_data){
+        var upColor = '#00da3c';
+        var downColor = '#ec0000';
+
+        var rawData =[];
+        _data = _data.data;
+        for (var i = 0;i<_data.length;i++){
+            var timeFormat = _data[i].year + "/" + _data[i].month + "/" + _data[i].day;
+            var _open =parseFloat(_data[i]["open"]),
+                _close = parseFloat(_data[i]["close"]),
+                _lowest = parseFloat(_data[i]["low"]),
+                _highest = parseFloat(_data[i]["high"]),
+                _volume = Math.abs(parseInt(_data[i]["volume"]));
+            rawData.push([timeFormat,_open,_close,_lowest,_highest,_volume]);
+        }
         function splitData(rawData) {
             var categoryData = [];
-            var values = []
+            var values = [];
+            var volumes = [];
             for (var i = 0; i < rawData.length; i++) {
                 categoryData.push(rawData[i].splice(0, 1)[0]);
-                values.push(rawData[i])
+                values.push(rawData[i]);
+                volumes.push([i, rawData[i][4], rawData[i][0] > rawData[i][1] ? 1 : -1]);
             }
+
             return {
                 categoryData: categoryData,
-                values: values
+                values: values,
+                volumes: volumes
             };
         }
 
-        //function calculateMA(dayCount) {
-        //    var result = [];
-        //    for (var i = 0, len = data0.values.length; i < len; i++) {
-        //        if (i < dayCount) {
-        //            result.push('-');
-        //            continue;
-        //        }
-        //        var sum = 0;
-        //        for (var j = 0; j < dayCount; j++) {
-        //            sum += data0.values[i - j][1];
-        //        }
-        //        result.push(sum / dayCount);
-        //    }
-        //    return result;
-        //}
-        //
-        var option = {
-            title: {
-                text: _data[1]["code"],
-                left: 0
+        function calculateMA(dayCount, data) {
+            var result = [];
+            for (var i = 0, len = data.values.length; i < len; i++) {
+                if (i < dayCount) {
+                    result.push('-');
+                    continue;
+                }
+                var sum = 0;
+                for (var j = 0; j < dayCount; j++) {
+                    sum += data.values[i - j][1];
+                }
+                result.push(+(sum / dayCount).toFixed(3));
+            }
+            return result;
+        }
+
+        var myChart = echarts.init(document.getElementById(domName));
+
+        var data = splitData(rawData);
+
+        myChart.setOption(option = {
+            backgroundColor: '#fff',
+            animation: false,
+            legend: {
+                bottom: 10,
+                left: 'center',
+                data: ['Dow-Jones index', 'MA5', 'MA10', 'MA20', 'MA30']
             },
             tooltip: {
                 trigger: 'axis',
                 axisPointer: {
                     type: 'cross'
+                },
+                backgroundColor: 'rgba(245, 245, 245, 0.8)',
+                borderWidth: 1,
+                borderColor: '#ccc',
+                padding: 10,
+                textStyle: {
+                    color: '#000'
+                },
+                position: function (pos, params, el, elRect, size) {
+                    var obj = {top: 10};
+                    obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 30;
+                    return obj;
+                },
+                extraCssText: 'width: 170px'
+            },
+            axisPointer: {
+                link: {xAxisIndex: 'all'},
+                label: {
+                    backgroundColor: '#777'
                 }
             },
-            legend: {
-                data: ['日K']
-            },
-            grid: {
-                left: '10%',
-                right: '10%',
-                bottom: '15%'
-            },
-            xAxis: {
-                type: 'category',
-                data: data0.categoryData,
-                scale: true,
-                boundaryGap : false,
-                axisLine: {onZero: false},
-                splitLine: {show: false},
-                splitNumber: 20,
-                min: 'dataMin',
-                max: 'dataMax'
-            },
-            yAxis: {
-                scale: true,
-                splitArea: {
-                    show: true
+            toolbox: {
+                feature: {
+                    dataZoom: {
+                        yAxisIndex: false
+                    },
+                    brush: {
+                        type: ['lineX', 'clear']
+                    }
                 }
             },
+            brush: {
+                xAxisIndex: 'all',
+                brushLink: 'all',
+                outOfBrush: {
+                    colorAlpha: 0.1
+                }
+            },
+            visualMap: {
+                show: false,
+                seriesIndex: 5,
+                dimension: 2,
+                pieces: [{
+                    value: 1,
+                    color: downColor
+                }, {
+                    value: -1,
+                    color: upColor
+                }]
+            },
+            grid: [
+                {
+                    left: '10%',
+                    right: '8%',
+                    height: '50%'
+                },
+                {
+                    left: '10%',
+                    right: '8%',
+                    top: '63%',
+                    height: '16%'
+                }
+            ],
+            xAxis: [
+                {
+                    type: 'category',
+                    data: data.categoryData,
+                    scale: true,
+                    boundaryGap : false,
+                    axisLine: {onZero: false},
+                    splitLine: {show: false},
+                    splitNumber: 20,
+                    min: 'dataMin',
+                    max: 'dataMax',
+                    axisPointer: {
+                        z: 100
+                    }
+                },
+                {
+                    type: 'category',
+                    gridIndex: 1,
+                    data: data.categoryData,
+                    scale: true,
+                    boundaryGap : false,
+                    axisLine: {onZero: false},
+                    axisTick: {show: false},
+                    splitLine: {show: false},
+                    axisLabel: {show: false},
+                    splitNumber: 20,
+                    min: 'dataMin',
+                    max: 'dataMax',
+                    axisPointer: {
+                        label: {
+                            formatter: function (params) {
+                                var seriesValue = (params.seriesData[0] || {}).value;
+                                return params.value
+                                    + (seriesValue != null
+                                            ? '\n' + echarts.format.addCommas(seriesValue)
+                                            : ''
+                                    );
+                            }
+                        }
+                    }
+                }
+            ],
+            yAxis: [
+                {
+                    scale: true,
+                    splitArea: {
+                        show: true
+                    }
+                },
+                {
+                    scale: true,
+                    gridIndex: 1,
+                    splitNumber: 2,
+                    axisLabel: {show: false},
+                    axisLine: {show: false},
+                    axisTick: {show: false},
+                    splitLine: {show: false}
+                }
+            ],
             dataZoom: [
                 {
                     type: 'inside',
-                    start: 50,
+                    xAxisIndex: [0, 1],
+                    start: 98,
                     end: 100
                 },
                 {
                     show: true,
+                    xAxisIndex: [0, 1],
                     type: 'slider',
-                    y: '90%',
-                    start: 50,
+                    top: '85%',
+                    start: 98,
                     end: 100
                 }
             ],
             series: [
                 {
-                    name: '日K',
+                    name: 'index',
                     type: 'candlestick',
-                    data: data0.values,
+                    data: data.values,
                     itemStyle: {
                         normal: {
                             color: upColor,
                             color0: downColor,
-                            borderColor: upBorderColor,
-                            borderColor0: downBorderColor
+                            borderColor: null,
+                            borderColor0: null
                         }
                     },
-                    //暂时不采用markPoint
-                    //markPoint: {
-                    //    label: {
-                    //        normal: {
-                    //            formatter: function (param) {
-                    //                return param != null ? Math.round(param.value) : '';
-                    //            }
-                    //        }
-                    //    },
-                    //    data: [
-                    //        {
-                    //            name: 'XX标点',
-                    //            coord: ['2013/5/31', 2300],
-                    //            value: 2300,
-                    //            itemStyle: {
-                    //                normal: {color: 'rgb(41,60,85)'}
-                    //            }
-                    //        },
-                    //        {
-                    //            name: 'highest value',
-                    //            type: 'max',
-                    //            valueDim: 'highest'
-                    //        },
-                    //        {
-                    //            name: 'lowest value',
-                    //            type: 'min',
-                    //            valueDim: 'lowest'
-                    //        },
-                    //        {
-                    //            name: 'average value on close',
-                    //            type: 'average',
-                    //            valueDim: 'close'
-                    //        }
-                    //    ],
-                    //    tooltip: {
-                    //        formatter: function (param) {
-                    //            return param.name + '<br>' + (param.data.coord || '');
-                    //        }
-                    //    }
-                    //},
-                    markLine: {
-                        symbol: ['none', 'none'],
-                        data: [
-                            [
-                                {
-                                    name: 'from lowest to highest',
-                                    type: 'min',
-                                    valueDim: 'lowest',
-                                    symbol: 'circle',
-                                    symbolSize: 10,
-                                    label: {
-                                        normal: {show: false},
-                                        emphasis: {show: false}
-                                    }
-                                },
-                                {
-                                    type: 'max',
-                                    valueDim: 'highest',
-                                    symbol: 'circle',
-                                    symbolSize: 10,
-                                    label: {
-                                        normal: {show: false},
-                                        emphasis: {show: false}
-                                    }
-                                }
-                            ],
-                            {
-                                name: 'min line on close',
-                                type: 'min',
-                                valueDim: 'close'
-                            },
-                            {
-                                name: 'max line on close',
-                                type: 'max',
-                                valueDim: 'close'
-                            }
-                        ]
+                    tooltip: {
+                        formatter: function (param) {
+                            param = param[0];
+                            return [
+                                'Date: ' + param.name + '<hr size=1 style="margin: 3px 0">',
+                                'Open: ' + param.data[0] + '<br/>',
+                                'Close: ' + param.data[1] + '<br/>',
+                                'Lowest: ' + param.data[2] + '<br/>',
+                                'Highest: ' + param.data[3] + '<br/>'
+                            ].join('');
+                        }
                     }
+                },
+                {
+                    name: 'MA5',
+                    type: 'line',
+                    data: calculateMA(5, data),
+                    smooth: true,
+                    lineStyle: {
+                        normal: {opacity: 0.5}
+                    }
+                },
+                {
+                    name: 'MA10',
+                    type: 'line',
+                    data: calculateMA(10, data),
+                    smooth: true,
+                    lineStyle: {
+                        normal: {opacity: 0.5}
+                    }
+                },
+                {
+                    name: 'MA20',
+                    type: 'line',
+                    data: calculateMA(20, data),
+                    smooth: true,
+                    lineStyle: {
+                        normal: {opacity: 0.5}
+                    }
+                },
+                {
+                    name: 'MA30',
+                    type: 'line',
+                    data: calculateMA(30, data),
+                    smooth: true,
+                    lineStyle: {
+                        normal: {opacity: 0.5}
+                    }
+                },
+                {
+                    name: 'Volume',
+                    type: 'bar',
+                    xAxisIndex: 1,
+                    yAxisIndex: 1,
+                    data: data.volumes
                 }
-
             ]
-        };
+        }, true);
 
-        myChart.setOption(option);
+        myChart.dispatchAction({
+            type: 'brush',
+            areas: [
+                {
+                    brushType: 'lineX',
+                    coordRange: ['2016-06-02', '2016-06-20'],
+                    xAxisIndex: 0
+                }
+            ]
+        });
     }
 
     //内部ajax方法
